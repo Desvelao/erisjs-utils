@@ -176,13 +176,13 @@ util.color.get = function(color,converted){
   return myColor
 }
 
-util.color.random(converted){
+util.color.random = function(converted){
     const randomColor = '#'+Math.floor(Math.random()*16777215).toString(16);
     if(converted === 'int'){return util.color.convert(randomColor,'hex-int')}
     return randomColor
 }
 
-util.color.myRandom(converted){
+util.color.myRandom = function(converted){
   const colors = Object.keys(myColors)
   const color = colors[Math.floor(Math.random()*colors.length)]
   if(converted){return util.color.convert(color)}else{return color}
