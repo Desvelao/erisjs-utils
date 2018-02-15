@@ -781,6 +781,7 @@ util.table.row = function(array,spaces,refill){
 }
 
 // *************************** U (UTIL) MODULE **********************
+util.u = {};
 
 util.u.errorReadKey = function(key){
   try{
