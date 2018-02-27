@@ -972,7 +972,7 @@ util.iterator.dictToArray = function* (dict) {
 
 // *************************** OS (Operating System) MODULE **********************
 util.os = {};
-util.os.bytesConvert(bytes,mode){
+util.os.bytesConvert = function(bytes,mode){
   if(mode ===' MB'){
     return Math.round(bytes / (1024*1024))
   }
