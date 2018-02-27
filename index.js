@@ -70,10 +70,10 @@ util.time.Timeout = class{
 util.time.fromString = function(content,mode){
   let result = false;
   if(mode === 'hh:mm!24'){
-    const match = content.match(/^([2][0-3]|[01]?[0-9]):([0-5][0-9])/)
+    const match = content.match(/^(2[0-3]|[01]?[0-9]):([0-5][0-9])/)
     if(match){result = {hour : match[1], minute : match[2]}}
   }else if(mode === 'hh:mm!24!all'){
-    const match = content.match(/^([2][0-3]|[01]?[0-9]):([0-5][0-9])/g)
+    const match = content.match(/^(2[0-3]|[01]?[0-9]):([0-5][0-9])/g)
     if(match){result = match}
   }else if(mode === 'DD/-MM'){
     const match = content.match(/(0?[1-9]|[12][0-9]|3[01])[\/\-](1[0-2]|0?[1-9])/)
@@ -923,6 +923,13 @@ util.type.Collection = (function(obj){
         if(result){this.update(item._id,result)}
       }
     }
+    mutate(id,func){
+      let item = this.find(el => el._id === id);
+      if(item){
+        const result = func(item);
+        if(result){this.update(item._id,result)}
+      }else{return false}
+    }
     getall(){return this.map(item => item)}
     get log(){
       console.log(this);
@@ -930,6 +937,7 @@ util.type.Collection = (function(obj){
     }
   }
 })()
+
 // *************************** U (UTIL) MODULE **********************
 util.u = {};
 
