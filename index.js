@@ -1,6 +1,7 @@
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const os = require('os');
 var util = {}
 
 // ************************************* DATE ***************************
@@ -18,6 +19,8 @@ util.date = function(time,mode){
     result = util.number.zerofication(date.getHours()) + ':' + util.number.zerofication(date.getMinutes()) + ':' + util.number.zerofication(date.getSeconds()) + ' ' + util.number.zerofication(date.getDate()) + '/' + util.number.zerofication((date.getMonth()+1)) + '/' + date.getFullYear()
   }else if(mode == 'hm/DMY'){
     result = util.number.zerofication(date.getHours()) + ':' + util.number.zerofication(date.getMinutes()) + ' ' + util.number.zerofication(date.getDate()) + '/' + util.number.zerofication((date.getMonth()+1)) + '/' + date.getFullYear()
+  }else if(mode == 'hm/DM'){
+    result = util.number.zerofication(date.getHours()) + ':' + util.number.zerofication(date.getMinutes()) + ' ' + util.number.zerofication(date.getDate()) + '/' + util.number.zerofication((date.getMonth()+1))
   }else if(mode == 's'){
     result = Math.round(date.getTime()/1000)
   }else if(mode == 'ts'){
@@ -42,11 +45,42 @@ util.time.convert = function(time,mode){
   if(mode == 's-ms'){time *= sg_ms}
   else if(mode == 'm-ms'){time *= sg_ms*m_sg}
   else if(mode == 'm-s'){time *= m_sg}
-  else if(mode == 's-date'){time = util.date('hour-date',time*sg_ms)}
+  else if(mode == 's-date'){time = util.date('hour-date',time*sg_ms)},
+  else if(mode =="s-hhmmss"){
+    let hours = Math.floor(seconds / 3600);
+    seconds %= 3600;
+    let minutes = Math.floor(seconds / 60);
+    seconds = seconds % 60;
+    time = `${util.number.zerofication(hours)}:${util.number.zerofication(minutes)}:${util.number.zerofication(seconds)}`
+  }
   //console.log(time);
   return time
 }
 
+util.time.Timeout = class{
+  constructor(fn,delay){
+    this.timer = setTimeout(function(){this.running = false;fn()},delay);
+    this.running = true;
+  }
+  remove(){clearTimeout(this.timer);this.running = false}
+  get pending(){return this.running}
+  // del(){delete this}
+}
+
+util.time.fromString = function(content,mode){
+  let result = false;
+  if(mode === 'hh:mm!24'){
+    const match = content.match(/^([2][0-3]|[01]?[0-9]):([0-5][0-9])/)
+    if(match){result = {hour : match[1], minute : match[2]}}
+  }else if(mode === 'hh:mm!24!all'){
+    const match = content.match(/^([2][0-3]|[01]?[0-9]):([0-5][0-9])/g)
+    if(match){result = match}
+  }else if(mode === 'DD/-MM'){
+    const match = content.match(/(0?[1-9]|[12][0-9]|3[01])[\/\-](1[0-2]|0?[1-9])/)
+    if(match){result = {day : match[1], month : match[2]}}
+  }
+  return result
+}
 // ******************************************* STRING MODULE **********************************
 util.string = {};
 
@@ -698,6 +732,46 @@ util.msg.sendImage = function(urls,results,container,callback){
   }
 }
 
+util.msg.Courier = function(courier){
+    this.courier = courier;
+    this.templates = {};
+    this.send = function(template,message,args){
+      if(this.templates[template]){
+        this.templates[template].do(message,args)
+      }
+    }
+    this.defineTemplate = function(name,template,fn){
+      this.templates[name] = {
+        do : (message,args) => {
+          // console.log(this);
+          fn(this.message(template,message),args)
+        },
+        template : template,
+        fn : fn
+      }
+    }
+    this.message = function(templateObj,options){
+      const courier = this.courier;
+      let template = Object.assign({},templateObj);
+      for (var field in template) {
+        if(typeof template[field] === 'string'){
+          const matches = template[field].match(/<[^>]+>/g);
+          if(matches){
+            matches.forEach(match => {template[field] = template[field].replace(match,eval(match.slice(1,-1)))})
+          }
+        }else if(typeof template[field] === 'object'){
+          template[field] = this.message(template[field],options);
+        }
+      }
+      return template
+    }
+    this.getTemplate = function(templateName,options){
+      if(this.templates[templateName]){
+        return this.message(this.templates[templateName].template,options);
+      }
+    }
+}
+
 // *************************** TABLE MODULE **********************
 
 util.table = {};
@@ -780,6 +854,82 @@ util.table.row = function(array,spaces,refill){
   return result
 }
 
+util.type = {};
+
+util.type.Collection = (function(obj){
+  const objwithID = function(id,obj){
+    let result = Object.assign({},obj);
+    result._id = id;
+    return result
+  }
+  return class extends Map{
+    constructor(obj){
+      let list;
+      if(typeof obj ===  'object' && !Array.isArray(obj)){
+        list = Object.keys(obj).map(el => [el,objwithID(el,obj[el])])
+      }else if(Array.isArray(obj)){
+        list = obj.map(el => [el[0],objwithID(el[0],el[1])])
+      }
+      super(list);
+    }
+    add(id,obj){
+      this.set(id, objwithID(id,obj));
+      return obj
+    }
+    remove(id){
+      let item = this.get(id);
+      if(!item){
+        return null
+      }
+      this.delete(id)
+      return item
+    }
+
+    update(id,obj){
+      return this.add(id,obj);
+    }
+
+    find(func){
+      for(let item of this.values()) {
+        if(func(item)){
+          return item;
+        }
+      }
+      return undefined;
+    }
+
+    filter(func) {
+      let arr = [];
+      for(let item of this.values()) {
+          if(func(item)) {
+              arr.push(item);
+          }
+      }
+      return arr;
+    }
+    map(func) {
+        let arr = [];
+        for(let item of this.values()) {
+            arr.push(func(item));
+        }
+        return arr;
+    }
+    sort(func){
+      return this.map(item => item).sort(func)
+    }
+    each(func){
+      for(let item of this.values()) {
+        const result = func(item);
+        if(result){this.update(item._id,result)}
+      }
+    }
+    getall(){return this.map(item => item)}
+    get log(){
+      console.log(this);
+      // console.log(this.values());
+    }
+  }
+})()
 // *************************** U (UTIL) MODULE **********************
 util.u = {};
 
@@ -810,6 +960,63 @@ util.iterator.dictToArray = function* (dict) {
       yield array[id++]
       //id++
     }
+}
+
+// *************************** OS (Operating System) MODULE **********************
+util.os = {};
+util.os.bytesConvert(bytes,mode){
+  if(mode ===' MB'){
+    return Math.round(bytes / (1024*1024))
+  }
+}
+
+util.os.getCPUInfo = function(callback){
+    var cpus = os.cpus();
+    var user = 0;
+    var nice = 0;
+    var sys = 0;
+    var idle = 0;
+    var irq = 0;
+    var total = 0;
+
+    for(var cpu in cpus){
+        if (!cpus.hasOwnProperty(cpu)) continue;
+        user += cpus[cpu].times.user;
+        nice += cpus[cpu].times.nice;
+        sys += cpus[cpu].times.sys;
+        irq += cpus[cpu].times.irq;
+        idle += cpus[cpu].times.idle;
+    }
+
+    var total = user + nice + sys + idle + irq;
+
+    return {
+        'idle': idle,
+        'total': total
+    };
+}
+
+util.os.getCPUUsage = function(callback, free){
+
+    var stats1 = util.os.getCPUInfo();
+    var startIdle = stats1.idle;
+    var startTotal = stats1.total;
+
+    setTimeout(function() {
+        var stats2 = util.os.getCPUInfo();
+        var endIdle = stats2.idle;
+        var endTotal = stats2.total;
+
+        var idle 	= endIdle - startIdle;
+        var total 	= endTotal - startTotal;
+        var perc	= idle / total;
+
+        if(free === true)
+            callback( perc );
+        else
+            callback( (1 - perc) );
+
+    }, 1000 );
 }
 
 // *************************** FN (Functions Complete) MODULE **********************
