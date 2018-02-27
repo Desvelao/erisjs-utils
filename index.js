@@ -45,7 +45,7 @@ util.time.convert = function(time,mode){
   if(mode == 's-ms'){time *= sg_ms}
   else if(mode == 'm-ms'){time *= sg_ms*m_sg}
   else if(mode == 'm-s'){time *= m_sg}
-  else if(mode == 's-date'){time = util.date('hour-date',time*sg_ms)},
+  else if(mode == 's-date'){time = util.date('hour-date',time*sg_ms)}
   else if(mode =="s-hhmmss"){
     let hours = Math.floor(seconds / 3600);
     seconds %= 3600;
