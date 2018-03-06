@@ -6,7 +6,6 @@ var util = {}
 
 // ************************************* DATE ***************************
 util.date = function(time,mode){
-  //mode = mode || 'hour-date'
   const default_format = 's';
   var date = typeof time == 'number' ? new Date(time) : new Date();
   if(typeof time == 'number'){date = new Date(time), mode = mode || default_format}else{date = new Date(), mode = time || default_format}
@@ -35,8 +34,45 @@ util.date = function(time,mode){
   return result
 }
 
+util.dateCustom = function(time,mode,zero){
+  let date = typeof time == 'number' ? new Date(time) : new Date();
+  const defaultModes = {
+    ts : function(date){return Math.round(date.getTime()/1000)},
+  }
+  const replacement = {
+    D : function(date){return date.getDate()},
+    M : function(date){return date.getMonth()+1},
+    Y : function(date){return date.getFullYear()},
+    y : function(date){return date.getFullYear().toString().slice(-2)},
+    s : function(date){return date.getSeconds()},
+    m : function(date){return date.getMinutes()},
+    h : function(date){return date.getHours()},
+  }
+  if(!time && !mode){
+    return defaultModes['ts'](date);
+  }else if(defaultModes[mode] !== undefined){
+    return defaultModes[mode](date);
+  }else{
+    let text ='';
+    for (let i = 0; i < mode.length; i++) {
+      let letter = mode.charAt(i);
+      if(zero){
+        text += replacement[letter] !== undefined ? util.number.zerofication(replacement[letter](date)) : letter
+      }else{
+        text += replacement[letter] !== undefined ? replacement[letter](date) : letter
+      }
+    }
+    return text
+  }
+}
+
 // ************************************* TIME ***************************
 util.time = {};
+
+util.time.now = function(time){
+  const date = typeof(time) === 'number' ? new Date(time) : new Date();
+  return Math.round(date.getTime()/1000)
+}
 
 util.time.convert = function(time,mode){
   mode = mode || 's-ms';
@@ -45,12 +81,12 @@ util.time.convert = function(time,mode){
   if(mode == 's-ms'){time *= sg_ms}
   else if(mode == 'm-ms'){time *= sg_ms*m_sg}
   else if(mode == 'm-s'){time *= m_sg}
-  else if(mode == 's-date'){time = util.date('hour-date',time*sg_ms)}
+  else if(mode == 's-date'){time = util.date('hms/DMY',time*sg_ms)}
   else if(mode =="s-hhmmss"){
-    let hours = Math.floor(seconds / 3600);
-    seconds %= 3600;
-    let minutes = Math.floor(seconds / 60);
-    seconds = seconds % 60;
+    const hours = Math.floor(time / 3600);
+    time %= 3600;
+    const minutes = Math.floor(time / 60);
+    const seconds = time % 60;
     time = `${util.number.zerofication(hours)}:${util.number.zerofication(minutes)}:${util.number.zerofication(seconds)}`
   }
   //console.log(time);
@@ -217,8 +253,7 @@ util.color.random = function(converted){
 }
 
 util.color.myRandom = function(converted){
-  const colors = Object.keys(myColors)
-  const color = colors[Math.floor(Math.random()*colors.length)]
+  const color = myColors[Math.floor(Math.random()*Object.keys(myColors).length)]
   if(converted){return util.color.convert(color)}else{return color}
 }
 

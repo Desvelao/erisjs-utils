@@ -1,6 +1,6 @@
 {
   "name": "erisjs-utils",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Functions library that help to create Discord Bots with [ErisJS](https://github.com/abalabahaha/eris)",
   "main": "index.js",
   "scripts": {
