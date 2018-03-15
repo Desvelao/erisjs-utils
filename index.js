@@ -322,7 +322,13 @@ util.request.getJSON = function(url){
       response.on('end', () => {
         // console.log('end');
         // console.log(chunks);
-        resolve(JSON.parse(chunks));
+        try{
+          resolve(JSON.parse(chunks));
+        }catch(err){
+          console.log(err);
+          reject(`Error request to "${url}"\n${err}`)
+        }
+        // resolve(JSON.parse(chunks));
       });
     });
     // handle connection errors of the request
@@ -807,6 +813,43 @@ util.msg.Courier = function(courier){
     }
 }
 
+util.msg.Notifier = class{
+    constructor(logchannel,options,last){
+      const last_default = 6;
+      const last_limit = 10;
+      this.inbox = [];
+      this.last = typeof(last) === 'number' && last < last_limit && last > 0 ? last : last_default;
+      this.channel = logchannel;
+      this.options = {title : options.title || 'Notificationer', color : options.color || 0};
+      this.events = options.events || {memberout : "📤", memberin : "📥", bot : "🤖"}
+      this.debugger = new util.u.Debugger(options.name || '',3,[{name : 'custom', level : 1, color : 'red'}])
+      for (var event in this.events) {
+        this.debugger.register(event.toUpperCase(),0,options.loggerColor || 'magenta')
+      }
+
+    }
+    add(type,content,log){
+      this.inbox.push({type,content,date : util.date()});
+      this.debugger.log(type,content);
+      if(log){this.log(type,content)}
+    }
+    log(type,content){
+      this.channel.createMessage(`${this.events[type] || type} ${content}`);
+    }
+    getLast(){
+      return this.inbox.slice(-this.last);
+    }
+    overview(msg){
+      // let table = new util.table.new(['Type','Date','Notification'],['4','11r','20']);
+      const notifications = this.getLast();
+      if(notifications.length < 1){return};
+      msg.author.getDMChannel().then(channel => channel.createMessage({embed : {
+        title : this.options.title,
+        description : notifications.map(notification => `${util.dateCustom(notification.date*1000,'h:m:s D/M',true)} ${this.events[notification.type] || notification.type} - ${notification.content}`).reverse().join('\n'),
+        color: this.options.color
+      }}))
+    }
+}
 // *************************** TABLE MODULE **********************
 
 util.table = {};
@@ -986,6 +1029,56 @@ util.u.errorReadKey = function(key){
 
 util.u.test = function(){
   console.log('Testing');
+}
+
+util.u.chalk = function(color,text){
+  color = color || 'white'
+  const colors = {
+    black : "\x1b[30m",
+    red : "\x1b[31m",
+    green : "\x1b[32m",
+    yellow : "\x1b[33m",
+    blue : "\x1b[34m",
+    magenta : "\x1b[35m",
+    cyan : "\x1b[36m",
+    white : "\x1b[37m"
+  }
+  const reset = "\x1b[0m";
+
+  return colors[color] ? colors[color] + text + reset : text
+}
+
+util.u.Debugger = class{
+  constructor(name,level,customLogs){
+    this.name = name || ''
+    this.level = level || 4
+    this.customLogs = {}
+    this.logs = {
+      info : {name : 'INFO', level : 0, color : 'cyan'},
+      warn : {name : 'WARN', level : 1, color : 'yellow'},
+      error : {name : 'ERROR', level : 2, color : 'red'}
+    }
+    this.register = function(mode,level,color,safe){
+      if(mode){
+        if(safe && this.logs[mode.toLowerCase()]){return};
+        this.logs[mode.toLowerCase()] = {name : mode, level : level || 0, color : color || 'white'}
+      }
+    }
+    if(customLogs){
+      customLogs.forEach(log => {
+        if(log.name){
+          this.register(log.name,log.level,log.color,true);
+        }else{
+          this.register(log,0,'white',true);
+        }
+      })
+    }
+  }
+  log(mode,text){
+    if(this.logs[mode] && this.logs[mode].level <= this.level){
+      console.log(`${util.u.chalk(this.logs[mode].color,this.logs[mode].name)}${this.name ? ':' + this.name : ''} <${util.dateCustom(null,'h:m:s D/M/Y',true)}>> ${text}`);
+    }
+  }
 }
 
 // *************************** ITERATORS **********************
@@ -1212,20 +1305,19 @@ util.fn.showPics = function(msg,config,pics,query,command){
 
 util.class = {};
 
-util.createCommand = function(cmd,fn){
-  //this = {};
-  //console.log(cmd);
-  this.command = cmd.cmd;
-  this.description = cmd.cmd;
-  this.enable = cmd.enable;
-  var fn = fn;
-  fn()
-  this.fn = () =>{
-    if(this.enable){fn()}
+util.cmd.create = function(cmd,options,fn){
+  if(Array.isArray(cmd)){
+  }else{
+    this.command = cmd
   }
-  this.cmd = function(){return this.command}
+  this.description = options.description || '';
+  this.onlyOwner = options.onlyOwner || false;
+  this.onlyGuild = options.onlyGuild || false;
+  this.fn = fn
+  this.subcommands = []
   //console.log(this);
 }
+
 
 util.class.p = class{
   constructor(name,lastname){
