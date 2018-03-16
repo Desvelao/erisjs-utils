@@ -822,7 +822,7 @@ util.msg.Notifier = class{
       this.channel = logchannel;
       this.options = {title : options.title || 'Notificationer', color : options.color || 0};
       this.events = options.events || {memberout : "📤", memberin : "📥", bot : "🤖"}
-      this.debugger = new util.u.Debugger(options.name || '',3,[{name : 'custom', level : 1, color : 'red'}])
+      this.debugger = new util.u.Logger(options.name || '',3,[{name : 'custom', level : 1, color : 'red'}])
       for (var event in this.events) {
         this.debugger.register(event.toUpperCase(),0,options.loggerColor || 'magenta')
       }
@@ -1048,7 +1048,7 @@ util.u.chalk = function(color,text){
   return colors[color] ? colors[color] + text + reset : text
 }
 
-util.u.Debugger = class{
+util.u.Logger = class{
   constructor(name,level,customLogs){
     this.name = name || ''
     this.level = level || 4
@@ -1153,6 +1153,61 @@ util.os.getCPUUsage = function(callback, free){
             callback( (1 - perc) );
 
     }, 1000 );
+}
+
+// *************************** HELPER MODULE **********************
+util.helper = {};
+
+util.helper.Logger = class extends util.u.Logger{
+    // Create a Logger for Discord and console
+    constructor(logchannel,options,lastMessages){
+      //@logchannel : Eris.Channel class
+      //@options : {
+      //    name : string - It shows in console
+      //    title : string - Title for message sending to Discord with .overview method
+      //    events : dictionary - Name of event : emoji
+      //    resetEvents : boolean - Reset default event form util.u.logger
+      //    messageNologs : string - Message to send when there aren't logs in inbox_tray
+      //    color : number (integer)
+      //    loggerColor : string (see util.u.chalk)
+      // }
+      // lastMessages : number (integer) - It shows last "lastMessages" messages
+      name = options.name || '';
+      super(name,4)
+      const last_default = 6;
+      const last_limit = 10;
+      this.inbox = [];
+      this.lastMessages = typeof(last) === 'number' && last < last_limit && last > 0 ? last : last_default;
+      this.channel = logchannel;
+      this.options = {name : name, title : `${name} - ${options.title || 'Logger'}`, color : options.color || 0, nologs : options.nologs || 'No logs yet!'};
+      this.events = options.events || {memberout : "📤", memberin : "📥", bot : "🤖"}
+      if(options.resetEvents){this.logs = {}};
+      // this.debugger = new util.u.Logger(options.name || '',3,[{name : 'custom', level : 1, color : 'red'}])
+      for (var event in this.events) {
+        this.register(event.toUpperCase(),0,options.loggerColor || 'magenta')
+      }
+
+    }
+    add(type,content,log){
+      this.inbox.push({type,content,date : util.dateCustom(null,'h:m:s D/M',true)});
+      this.log(type,content);
+      if(log){this.send(type,content)}
+    }
+    send(type,content){
+      this.channel.createMessage(`${this.events[type] || type} ${content}`);
+    }
+    getLast(){
+      return this.inbox.slice(-this.lastMessages);
+    }
+    overview(msg){
+      const notifications = this.getLast();
+      if(notifications.length < 1){return msg.reply(this.options.nologs)};
+      msg.author.getDMChannel().then(channel => channel.createMessage({embed : {
+        title : this.options.title,
+        description : notifications.map(notification => `${notification.date} ${this.events[notification.type] || notification.type} - ${notification.content}`).reverse().join('\n'),
+        color: this.options.color
+      }}))
+    }
 }
 
 // *************************** FN (Functions Complete) MODULE **********************
