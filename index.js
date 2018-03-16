@@ -1172,7 +1172,7 @@ util.helper.Logger = class extends util.u.Logger{
       //    loggerColor : string (see util.u.chalk)
       // }
       // lastMessages : number (integer) - It shows last "lastMessages" messages
-      name = options.name || '';
+      const name = options.name || '';
       super(name,4)
       const last_default = 6;
       const last_limit = 10;
