@@ -1177,7 +1177,7 @@ util.helper.Logger = class extends util.u.Logger{
       const last_default = 6;
       const last_limit = 10;
       this.inbox = [];
-      this.lastMessages = typeof(last) === 'number' && last < last_limit && last > 0 ? last : last_default;
+      this.lastMessages = typeof(last) === 'number' && lastMessages < last_limit && lastMessages > 0 ? lastMessages : last_default;
       this.channel = logchannel;
       this.options = {name : name, title : `${name} - ${options.title || 'Logger'}`, color : options.color || 0, nologs : options.nologs || 'No logs yet!'};
       this.events = options.events || {memberout : "📤", memberin : "📥", bot : "🤖"}
