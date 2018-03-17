@@ -135,6 +135,10 @@ util.string.replace = function(text,dict,arrow){
   return text
 }
 
+util.string.concat = function(concat,...strings){
+  return strings.join(concat)
+}
+
 util.string.ReplaceWithDictionaryAndLang = function(array_dicts,setArrow,lang){
   function addArrow(value){return '<'+ value + '>'}
   function addDict(dictbase,add,arrow){
@@ -285,6 +289,7 @@ util.cmd.load = function(load){ //Load path to json or Dictionaty object (s obje
   var commands = {};
   if(typeof load == 'object'){
     for (var i in load){
+      if(i.startsWith('_')){commands[i] = load[i];continue}; // it allows raw _categories in cmds.json
       commands[i] = {cmd : i};
       for (var j in load[i]) {
         if(j != 's'){commands[i][j] = load[i][j]}
@@ -1246,6 +1251,7 @@ util.fn.help = function(msg,cmds,prefix,title,help,categories,dm,replace){
       var array_subcommands = Object.keys(category[cmd].s).sort();
 
       for (var scmd = 0; scmd < array_subcommands.length; scmd++) {
+        if(category[cmd].s[array_subcommands[scmd]].hide){continue};
         text += `     · \`|${category[cmd].s[array_subcommands[scmd]].cmd}${category[cmd].s[array_subcommands[scmd]].arguments ? ' ' + category[cmd].s[array_subcommands[scmd]].arguments + '|' : '|'}\` - ${replace ? replace.do(category[cmd].s[array_subcommands[scmd]].description) : category[cmd].s[array_subcommands[scmd]].description}\n`
       }
       //text += '\n';
@@ -1259,6 +1265,61 @@ util.fn.help = function(msg,cmds,prefix,title,help,categories,dm,replace){
     if(msg.channel.type === 0){util.msg.createDM(msg,text)}else{util.msg.create(msg,text)}
   }
   //setTimeout(() => {msg.delete()},game.waitToDelete);
+}
+
+util.fn.helpGeneralCategories = function(msg,categories,prefix,title,help,dm,replace){
+  console.log(replace);
+  const text = title + '\n' + help + '\n\n' + Object.keys(categories).sort().map(category_name => {
+    const category = categories[category_name];
+    category.name = category_name;
+    console.log(category);
+    // console.log(replace);
+    if(category.hide || category.owner){return};
+    category.description = replace ? replace.do(category.description) : category.description;
+    return `**${category.name}**: ${category.description}\n\`${prefix}help ${category_name.toLowerCase()}\``
+  }).filter(c => c).join('\n\n');
+  if(dm && msg.channel.type === 0){
+    util.msg.createDM(msg,text);
+  }else{
+    util.msg.create(msg,text);
+  }
+}
+
+util.fn.helpGetCmdsFromCategories = function(msg,prefix,commands,categories,title,help,dm,replace){
+  console.log('TYPEOF',typeof categories,categories);
+  let organize = typeof categories === 'string' ? [categories.toLowerCase()] : categories.map(cat => cat.toLowerCase()).sort();
+  const cmds = Object.keys(commands).filter(c => !c.startsWith('_')).map(c => {
+    const cmd = commands[c];
+    return cmd
+  }).filter(c => organize.indexOf(c.category.toLowerCase()) > -1);
+  if(cmds.length < 1){return};
+  console.log(cmds);
+  function sortCmdsFromCat(a,b){
+    a = a.cmd.toLowerCase();b = b.cmd.toLowerCase();
+    if(a > b){return 1}else if(a < b){return -1}else{return 0}
+  }
+  function showSubcommands(cmd){
+    if(!cmd.s){
+      return '';
+    }else{
+      const scmds = Object.keys(cmd.s).map(sc => {
+        const scmd = cmd.s[sc];
+        if(scmd.hide){return};
+        return `    · \`${scmd.cmd}${scmd.arguments ? ' ' + scmd.arguments : ''}\` - ${replace ? replace.do(scmd.description) : scmd.description}`
+      }).filter(scmd => scmd)
+      console.log(scmds);
+      if(scmds.length < 1){return ''};
+      return '\n' + scmds.join('\n')
+    }
+  }
+  const text = util.string.concat('\n\n',title,help,organize.map(cat => {
+    return `**${util.string.capitalize(cat)}**\n\n${cmds.filter(c => {console.log(c.cmd,c.category);return cat === c.category.toLowerCase() && !c.hide}).sort(sortCmdsFromCat).map(c => `\`${prefix}${c.cmd}${c.arguments ? ' ' + c.arguments : ''}\` - ${replace ? replace.do(c.description) : c.description}${showSubcommands(c)}`).join('\n')}`
+  }).join('\n\n'))
+  if(dm && msg.channel.type === 0){
+    util.msg.createDM(msg,text);
+  }else{
+    util.msg.create(msg,text);
+  }
 }
 
 util.fn.wrongCmd = function(msg,table,config){
