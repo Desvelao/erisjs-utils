@@ -742,7 +742,7 @@ util.msg.guilds = function(bot,message,file){
   }
 }
 
-util.msg.sendImage = function(urls,results,container,callback){
+util.msg.sendImage_ = function(urls,results,container,callback){
   var url = urls.shift();
   var results = results || [];
   if(url.startsWith("https")){
@@ -776,6 +776,42 @@ util.msg.sendImage = function(urls,results,container,callback){
       console.error(e);
     });
   }
+}
+
+util.msg.sendImage = function(url){
+  return new Promise((resolve, reject) => {
+    if(url.startsWith("https")){
+      //if(container){'Petition'};
+      https.get(url,function(res){
+        var data = [];
+        res.on('data',function(d){
+          data.push(d);
+        });
+        res.on('end',function(){
+          var buffer = Buffer.concat(data);
+          //console.log(buffer.toString('base64'));
+          resolve(buffer);
+        });
+      }).on('error', (e) => {
+        reject(e);
+      });
+    }else if(url.startsWith("http")){
+      //if(container){'Petition'};
+      http.get(url,function(res){
+          var data = [];
+        res.on('data',function(d){
+          data.push(d);
+        });
+        res.on('end',function(){
+          var buffer = Buffer.concat(data);
+          //console.log(buffer.toString('base64'));
+          resolve(buffer);
+        });
+      }).on('error', (e) => {
+        reject(e);
+      });
+    }
+  })
 }
 
 util.msg.Courier = function(courier){
