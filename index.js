@@ -1082,7 +1082,27 @@ util.u.chalk = function(color,text){
     blue : "\x1b[34m",
     magenta : "\x1b[35m",
     cyan : "\x1b[36m",
-    white : "\x1b[37m"
+    white : "\x1b[37m",
+
+    error : "\x1b[41m\x1b[37m",
+    warning : "\x1b[43m\x1b[30m"
+    // FgBlack = "\x1b[30m"
+    // FgRed = "\x1b[31m"
+    // FgGreen = "\x1b[32m"
+    // FgYellow = "\x1b[33m"
+    // FgBlue = "\x1b[34m"
+    // FgMagenta = "\x1b[35m"
+    // FgCyan = "\x1b[36m"
+    // FgWhite = "\x1b[37m"
+    //
+    // BgBlack = "\x1b[40m"
+    // BgRed = "\x1b[41m"
+    // BgGreen = "\x1b[42m"
+    // BgYellow = "\x1b[43m"
+    // BgBlue = "\x1b[44m"
+    // BgMagenta = "\x1b[45m"
+    // BgCyan = "\x1b[46m"
+    // BgWhite = "\x1b[47m"
   }
   const reset = "\x1b[0m";
 
@@ -1221,11 +1241,14 @@ util.helper.Logger = class extends util.u.Logger{
       this.lastMessages = typeof(last) === 'number' && lastMessages < last_limit && lastMessages > 0 ? lastMessages : last_default;
       this.channel = logchannel;
       this.options = {name : name, title : `${name} - ${options.title || 'Logger'}`, color : options.color || 0, nologs : options.nologs || 'No logs yet!'};
-      this.events = options.events || {memberout : "📤", memberin : "📥", bot : "🤖"}
+      this.events = options.events || {memberout : {icon : "📤", color : 'magenta'},
+        memberin : {icon : "📥", color : 'magenta'},
+        bot : {icon : "🤖", color : 'magenta'}}
       if(options.resetEvents){this.logs = {}};
       // this.debugger = new util.u.Logger(options.name || '',3,[{name : 'custom', level : 1, color : 'red'}])
       for (var event in this.events) {
-        this.register(event.toUpperCase(),0,options.loggerColor || 'magenta')
+        console.log(event,this.events[event].color);
+        this.register(event.toUpperCase(),0,this.events[event].color || 'magenta')
       }
 
     }
@@ -1235,7 +1258,7 @@ util.helper.Logger = class extends util.u.Logger{
       if(log){this.send(type,content)}
     }
     send(type,content){
-      this.channel.createMessage(`${this.events[type] || type} ${content}`);
+      this.channel.createMessage(`${this.events[type].icon || type} ${content}`);
     }
     getLast(){
       return this.inbox.slice(-this.lastMessages);
