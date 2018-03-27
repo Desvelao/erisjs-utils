@@ -1268,7 +1268,7 @@ util.helper.Logger = class extends util.u.Logger{
       if(notifications.length < 1){return msg.reply(this.options.nologs)};
       msg.author.getDMChannel().then(channel => channel.createMessage({embed : {
         title : this.options.title,
-        description : notifications.map(notification => `${notification.date} ${this.events[notification.type] || notification.type} - ${notification.content}`).reverse().join('\n'),
+        description : notifications.map(notification => `**${notification.date}** ${this.events[notification.type] ? this.events[notification.type].icon : notification.type} - ${notification.content}`).reverse().join('\n'),
         color: this.options.color
       }}))
     }
