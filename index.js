@@ -5,6 +5,12 @@ const os = require('os');
 var util = {}
 
 // ************************************* DATE ***************************
+/**
+ * Create a time formatted to string
+ * @param  {[number]} time [ms]
+ * @param  {[string]} mode [mode to return the time]
+ * @return {[string or number]}      [time formatted]
+ */
 util.date = function(time,mode){
   const default_format = 's';
   var date = typeof time == 'number' ? new Date(time) : new Date();
@@ -34,6 +40,13 @@ util.date = function(time,mode){
   return result
 }
 
+/**
+ * [Create a formatted time with a custom format]
+ * @param  {[number]} time [time in ms. If not provided, the time is now]
+ * @param  {[string]} mode [format of time]
+ * @param  {[type]} zero [zerification the values of time. Example with zero = true. 4 hours 9 minutes = 04:09]
+ * @return {[type]}      [custom format]
+ */
 util.dateCustom = function(time,mode,zero){
   let date = typeof time == 'number' ? new Date(time) : new Date();
   const defaultModes = {
@@ -69,11 +82,22 @@ util.dateCustom = function(time,mode,zero){
 // ************************************* TIME ***************************
 util.time = {};
 
+/**
+ * [Timestamp in seconds for time given or now]
+ * @param  {[number]} time [in ms]
+ * @return {[number]}      [in s]
+ */
 util.time.now = function(time){
   const date = typeof(time) === 'number' ? new Date(time) : new Date();
   return Math.round(date.getTime()/1000)
 }
 
+/**
+ * [Convert the time]
+ * @param  {[number]} time [description]
+ * @param  {[string]} mode [unit from-to unit]
+ * @return {[type]}      [time converted]
+ */
 util.time.convert = function(time,mode){
   mode = mode || 's-ms';
   const sg_ms = 1000;
@@ -93,7 +117,13 @@ util.time.convert = function(time,mode){
   return time
 }
 
+
 util.time.Timeout = class{
+  /**
+   * [create a Timer]
+   * @param {Function} fn    [function to execute after timeout]
+   * @param {number}   delay [delay timeout in ms]
+   */
   constructor(fn,delay){
     this.timer = setTimeout(function(){this.running = false;fn()},delay);
     this.running = true;
@@ -103,6 +133,12 @@ util.time.Timeout = class{
   // del(){delete this}
 }
 
+/**
+ * Get the values for a time fomatted as a string
+ * @param  {string} content [string that contains the time string formatted]
+ * @param  {string} mode    [description]
+ * @return {object}         [description]
+ */
 util.time.fromString = function(content,mode){
   let result = false;
   if(mode === 'hh:mm!24'){
@@ -120,10 +156,22 @@ util.time.fromString = function(content,mode){
 // ******************************************* STRING MODULE **********************************
 util.string = {};
 
+/**
+ * First letter capitalize a string
+ * @param  {string} string [string to capitalize]
+ * @return {string}        [result]
+ */
 util.string.capitalize = function(string){
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
+/**
+ * [description]
+ * @param  {string} text  [string to replace]
+ * @param  {Object} dict  [object that contains the words to replace]
+ * @param  {boolean} arrow [replace if true => <word>, if false => word]
+ * @return {string}       [result]
+ */
 util.string.replace = function(text,dict,arrow){
   //console.log(arguments.length);
   if(dict){
@@ -135,10 +183,23 @@ util.string.replace = function(text,dict,arrow){
   return text
 }
 
+/**
+ * [Concat strings]
+ * @param  {string} concat  [description]
+ * @param  {string} strings [description]
+ * @return {string}         [description]
+ */
 util.string.concat = function(concat,...strings){
   return strings.join(concat)
 }
 
+/**
+ * [Class that creates a replacer of strings]
+ * @param  {Array of objects} array_dicts [Objects with key to replace for value]
+ * @param  {boolean} setArrow    [The key of dicts has or has not <> in the string base]
+ * @param  {Object} lang        [Object that has strings what can have text to replace]
+ * @return {instance}             [Replacer]
+ */
 util.string.ReplaceWithDictionaryAndLang = function(array_dicts,setArrow,lang){
   function addArrow(value){return '<'+ value + '>'}
   function addDict(dictbase,add,arrow){
@@ -213,6 +274,12 @@ util.string.ReplaceWithDictionaryAndLang = function(array_dicts,setArrow,lang){
 
 util.number = {};
 
+/**
+ * Zerofication a number
+ * @param  {number} text   [number to zerificate]
+ * @param  {number} digits [digits to zeroficate: 01, 001...]
+ * @return {string}        [result]
+ */
 util.number.zerofication = function(text,digits){
   digits = digits || 2;
   text = text.toString();
@@ -222,12 +289,25 @@ util.number.zerofication = function(text,digits){
   return text
 }
 
+/**
+ * Convert a number to k
+ * @param  {number} number [description]
+ * @param  {number} format [description]
+ * @param  {2} digits [decimals digits]
+ * @return {string}        [description]
+ */
 util.number.tok = function(number,format,digits){ //Deprecated
   digits = digits || 1
   format = format || 1000
   return (number/format).toFixed(digits)
 }
 
+/**
+ * Create a random within min-max or 1-min if max is not provide
+ * @param  {number} min [description]
+ * @param  {[number]} max [description]
+ * @return {number}     [description]
+ */
 util.number.random = function(min,max){
   return max !== undefined ? Math.floor(Math.random()*(max - min) + min) : Math.floor((Math.random() * min) + 1);
 }
@@ -236,12 +316,24 @@ util.number.random = function(min,max){
 
 util.color = {};
 
+/**
+ * Convert format colors
+ * @param  {string/number} color [input value]
+ * @param  {string} mode  [format to convert value]
+ * @return {string/number}       [description]
+ */
 util.color.convert = function(color,mode){
   mode = mode || 'hex-int';
   if(mode === 'hex-int'){color = parseInt(color.replace(/^#/, ''), 16)}
   return color
 }
 
+/**
+ * Get a color from a internal list
+ * @param  {string} color     [color to get]
+ * @param  {boolean} converted [convert to int]
+ * @return {string}           [color]
+ */
 util.color.get = function(color,converted){
   const myColor = myColors[color] || myColors['black']
   if(converted){
@@ -249,13 +341,22 @@ util.color.get = function(color,converted){
   }
   return myColor
 }
-
+/**
+ * Get a random color
+ * @param  {boolean} converted [convert to int]
+ * @return {string}           [color]
+ */
 util.color.random = function(converted){
     const randomColor = '#'+Math.floor(Math.random()*16777215).toString(16);
     if(converted === 'int'){return util.color.convert(randomColor,'hex-int')}
     return randomColor
 }
 
+/**
+ * Get a random color for a internal list
+ * @param  {boolean} converted [description]
+ * @return {color}           [description]
+ */
 util.color.myRandom = function(converted){
   const color = myColors[Math.floor(Math.random()*Object.keys(myColors).length)]
   if(converted){return util.color.convert(color)}else{return color}
@@ -268,11 +369,22 @@ const myColors = {
 // ******************************************* CMD MODULE **********************************
 
 util.cmd = {};
-
+/**
+ * Slice the prefix for a command
+ * @param  {string} message [base string]
+ * @param  {string} prefix  [prefix to slice]
+ * @return {string}         [result]
+ */
 util.cmd.noprefix = function(message,prefix){
   return message.slice(prefix.length);
 }
 
+/**
+ * Get command argumends into an array
+ * @param  {string} message [description]
+ * @param  {string} prefix  [description]
+ * @return {array}         [description]
+ */
 util.cmd.split = function(message,prefix){
   return util.cmd.noprefix(message,prefix).split(' ');
 }
@@ -352,6 +464,20 @@ util.request.getJSONMulti = function(urls,results){
     promises.push(util.request.getJSON(urls[i]))
   }
   return Promise.all(promises)
+}
+
+util.request.multipleJSON = function(urls,responses,ratelimit,callback){
+    responses = responses || []
+    // console.log(responses);
+    const url = urls.shift()
+    util.request.getJSON(url).then(data => {
+      responses.push(data)
+      console.log('Done request:',url);
+      if(!urls.length){return callback(responses)}
+      setTimeout(() => {
+        util.request.multipleJSON(urls,responses,ratelimit,callback)
+      },Math.round(1000/ratelimit))
+    })
 }
 
 util.request.getJSON2 = function(urls,results){
@@ -652,14 +778,15 @@ util.steam.idToDotaID = function(id64){
 // *************************** DOTA MODULE **********************
 
 util.dota = {};
-const dotalinks = {dotabuff : 'https://www.dotabuff.com/players/'}
+const dotalinks = {dotabuff : 'https://www.dotabuff.com/players/', opendota : 'https://www.opendota.com/players/'}
 
 util.dota.idToUrl = function(id,mode){
   return (dotalinks[mode] ? dotalinks[mode] : '') + id
 }
 
-util.dota.idToLink = function(id,hide,text){
-  return hide ? `[${text ? text : id}](${util.dota.idToUrl(id)})` : `[${text ? text : id}](${util.dota.idToUrl(id)}) \`${util.dota.idToUrl(id)}\``
+util.dota.idToLink = function(id,hide,text,mode){
+  mode = mode || 'dotabuff'
+  return hide ? `[${text ? text : id}](${util.dota.idToUrl(id,mode)})` : `[${text ? text : id}](${util.dota.idToUrl(id,mode)}) \`${util.dota.idToUrl(id,mode)}\``
 }
 
 // *************************** FILE MODULE **********************
