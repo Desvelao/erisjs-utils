@@ -586,7 +586,7 @@ util.guild.loadEmojis = function(guild){
   return emojis
 }
 
-util.guild.getDefaultChannel = function(guild){
+util.guild.getDefaultChannel = function(guild,bot){
   //console.log(guild);
   var defaultChannel;
     for(var channel of guild.channels.values()) {
@@ -1374,7 +1374,7 @@ util.helper.Logger = class extends util.u.Logger{
       if(options.resetEvents){this.logs = {}};
       // this.debugger = new util.u.Logger(options.name || '',3,[{name : 'custom', level : 1, color : 'red'}])
       for (var event in this.events) {
-        console.log(event,this.events[event].color);
+        // console.log(event,this.events[event].color);
         this.register(event.toUpperCase(),0,this.events[event].color || 'magenta')
       }
 
