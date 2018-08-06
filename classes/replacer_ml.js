@@ -32,10 +32,11 @@ module.exports = class ReplacerMultiLanguage{
     const toReplace = this.languages[lang] && this.languages[lang][string] ? this.languages[lang][string] : string
     return keywords ? ReplacerMultiLanguage.replace(toReplace,[...this.keywords,...ReplacerMultiLanguage.createKeywords(keywords,withArrow ? this.arrow : null,null)]) : ReplacerMultiLanguage.replace(toReplace,[...this.keywords])
   }
-  t(lang,string,keywords){
+  t(lang,string,keywords,withArrow){
     lang = lang || this.defaultLang
     const toReplace = this.languages[lang] && this.languages[lang][string] ? this.languages[lang][string] : string
-    return ReplacerMultiLanguage.replace(toReplace,[...this.keywords,...(keywords ? ReplacerMultiLanguage.createKeywords(keywords,null,null) : null)])
+    return keywords ? ReplacerMultiLanguage.replace(toReplace,[...this.keywords,...ReplacerMultiLanguage.createKeywords(keywords,withArrow ? this.arrow : null,null)]) : ReplacerMultiLanguage.replace(toReplace,[...this.keywords])
+    // return ReplacerMultiLanguage.replace(toReplace,[...this.keywords,...(keywords ? ReplacerMultiLanguage.createKeywords(keywords,withArrow ? this.arrow : null,null) : null)])
   }
   static replace(string,search){
     return search.reduce((sum,keyword) => sum.replace(new RegExp(keyword.key,'g'),keyword.value),string)
